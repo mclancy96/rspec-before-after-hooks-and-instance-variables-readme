@@ -1,6 +1,6 @@
 # RSpec: Before/After Hooks and Instance Variables: DRYing Up Your Specs (and Your Tears)
 
-Welcome to Lesson 6! If you’ve ever found yourself copying and pasting the same setup code into every test, this lesson is for you. Today, we’ll meet RSpec’s before/after hooks and instance variables—your new best friends for writing clean, DRY (Don’t Repeat Yourself) specs. We’ll go step by step, with lots of examples, analogies, and clarifications, so you’ll never wonder “where does this go?” again.
+If you’ve ever found yourself copying and pasting the same setup code into every test, this lesson is for you. Today, we’ll meet RSpec’s before/after hooks and instance variables—your new best friends for writing clean, DRY (Don’t Repeat Yourself) specs. We’ll go step by step, with lots of examples, analogies, and clarifications, so you’ll never wonder “where does this go?” again.
 
 ---
 
