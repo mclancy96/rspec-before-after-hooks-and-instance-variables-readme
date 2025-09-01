@@ -33,18 +33,22 @@ after(:each)
 Runs before every single example in a group. Think of it as “resetting the stage” before each scene.
 
 ```ruby
-# /spec/calculator_spec.rb
-RSpec.describe Calculator do
+# /spec/hooks_spec.rb
+RSpec.describe RecipeBox do
   before(:each) do
-    @calculator = Calculator.new
+    @box = RecipeBox.new
+    @recipe = Recipe.new('Pancakes', ['flour', 'milk', 'egg'])
+    @box.add_recipe(@recipe)
   end
 
-  it "adds numbers" do
-    expect(@calculator.add(2, 3)).to eq(5)
+  it "contains the added recipe" do
+    expect(@box.recipes).to include(@recipe)
   end
 
-  it "subtracts numbers" do
-    expect(@calculator.subtract(5, 2)).to eq(3)
+  it "can add another recipe" do
+    new_recipe = Recipe.new('Omelette', ['egg', 'cheese'])
+    @box.add_recipe(new_recipe)
+    expect(@box.recipes).to include(new_recipe)
   end
 end
 ```
@@ -54,14 +58,16 @@ end
 Runs once before all examples in a group. Use this for expensive setup you only want to do once (rare in most specs).
 
 ```ruby
-# /spec/database_spec.rb
-RSpec.describe Database do
+# /spec/hooks_spec.rb
+RSpec.describe 'RecipeBox with before(:all)' do
   before(:all) do
-    @db = Database.connect
+    @shared_box = RecipeBox.new
+    @shared_recipe = Recipe.new('Toast', ['bread', 'butter'])
+    @shared_box.add_recipe(@shared_recipe)
   end
 
-  it "can find a user" do
-    expect(@db.find_user("alice")).not_to be_nil
+  it "shares state across examples" do
+    expect(@shared_box.recipes).to include(@shared_recipe)
   end
 end
 ```
@@ -71,21 +77,20 @@ end
 Runs after each example. Great for cleanup! Cleanup is important because it prevents side effects from one test affecting another. For example, if you create a file or open a database connection in one test, you want to make sure it’s closed or deleted before the next test runs. This keeps your test suite reliable and avoids mysterious bugs.
 
 ```ruby
-# /spec/tempfile_spec.rb
-RSpec.describe Tempfile do
+# /spec/hooks_spec.rb
+RSpec.describe RecipeBox do
   before(:each) do
-    @file = Tempfile.new("test.txt")
+    @box = RecipeBox.new
+    @recipe = Recipe.new('Pancakes', ['flour', 'milk', 'egg'])
+    @box.add_recipe(@recipe)
   end
 
   after(:each) do
-    @file.close
-    @file.unlink
+    @box.clear
   end
 
-  it "writes to a file" do
-    @file.write("hello")
-    @file.rewind
-    expect(@file.read).to eq("hello")
+  it "cleans up the RecipeBox after each example" do
+    expect(@box.recipes.size).to eq(1)
   end
 end
 ```
@@ -101,16 +106,21 @@ In the next lesson, you’ll learn about `let` and `let!`, which improve on inst
 ### Bad Example: Repeating Yourself
 
 ```ruby
-# /spec/calculator_spec.rb
-RSpec.describe Calculator do
-  it "adds numbers" do
-    calculator = Calculator.new
-    expect(calculator.add(2, 3)).to eq(5)
+# /spec/hooks_spec.rb
+RSpec.describe RecipeBox do
+  it "adds a recipe (repeats setup)" do
+    box = RecipeBox.new
+    recipe = Recipe.new('Pancakes', ['flour', 'milk', 'egg'])
+    box.add_recipe(recipe)
+    expect(box.recipes).to include(recipe)
   end
 
-  it "subtracts numbers" do
-    calculator = Calculator.new
-    expect(calculator.subtract(5, 2)).to eq(3)
+  it "removes a recipe (repeats setup)" do
+    box = RecipeBox.new
+    recipe = Recipe.new('Pancakes', ['flour', 'milk', 'egg'])
+    box.add_recipe(recipe)
+    box.remove_recipe(recipe)
+    expect(box.recipes).not_to include(recipe)
   end
 end
 ```
@@ -118,18 +128,21 @@ end
 ### Good Example: Using before and @calculator
 
 ```ruby
-# /spec/calculator_spec.rb
-RSpec.describe Calculator do
+# /spec/hooks_spec.rb
+RSpec.describe RecipeBox do
   before(:each) do
-    @calculator = Calculator.new
+    @box = RecipeBox.new
+    @recipe = Recipe.new('Pancakes', ['flour', 'milk', 'egg'])
+    @box.add_recipe(@recipe)
   end
 
-  it "adds numbers" do
-    expect(@calculator.add(2, 3)).to eq(5)
+  it "adds a recipe" do
+    expect(@box.recipes).to include(@recipe)
   end
 
-  it "subtracts numbers" do
-    expect(@calculator.subtract(5, 2)).to eq(3)
+  it "removes a recipe" do
+    @box.remove_recipe(@recipe)
+    expect(@box.recipes).not_to include(@recipe)
   end
 end
 ```
@@ -140,28 +153,24 @@ end
 - Use `before(:all)` only for slow, expensive setup that doesn’t need to be reset between tests.
 - Don’t use instance variables from `before(:all)` if you’re modifying them in tests (it can get weird and lead to unpredictable results). Try running a test where you change an instance variable set in `before(:all)` across multiple examples and see what happens!
 
-Run `rspec /spec/calculator_spec.rb` to see how before(:each) sets up the test for every example.
+Run `rspec spec/hooks_spec.rb` to see how before(:each) and after(:each) set up and clean up the test for every example.
 
-## Practice Prompts
+## Getting Hands-On
 
-Try these exercises to reinforce your learning. For each, write your own spec in the appropriate file (e.g., `/spec/calculator_spec.rb` or `/spec/tempfile_spec.rb`).
+You can fork and clone this lesson's repo, run the specs, and try implementing the two pending specs marked as student exercises in `spec/hooks_spec.rb`.
 
-**Exercise 1: Refactor repeated setup**
-Refactor a spec that repeats setup code to use `before(:each)` and instance variables.
+To get started:
 
-**Exercise 2: Explore before(:all) behavior**
-Try using `before(:all)` and see what happens if you change the variable in a test. What do you notice?
+```sh
+git clone <your-fork-url>
+cd rspec-before-after-hooks-and-instance-variables-readme
+bundle install
+bin/rspec
+```
 
-**Exercise 3: Add cleanup with after(:each)**
-Add an `after(:each)` hook to clean up a resource (like a file or database connection). Why is cleanup important?
+Look for the two pending specs (marked as 'Student exercise') and try to implement them yourself! All the examples use the RecipeBox and Recipe classes, so you can see real-world usage of before/after hooks and instance variables in a practical domain.
 
-**Exercise 4: Predict before(:all) variable modification**
-Predict what will happen if an instance variable set in `before(:all)` is modified in multiple tests. Then try it and observe the results.
-
-**Exercise 5: Why DRY?**
-Why is DRY code easier to maintain? Write your answer in your own words.
-
----
+----
 
 ## Resources
 
